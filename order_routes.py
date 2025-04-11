@@ -8,6 +8,7 @@ from helper import to_ist
 import models, schemas, database
 from pytz import timezone
 from uuid import UUID
+from kafka_producer import delivery_event_producer
 
 
 order_router = APIRouter(prefix="/order", tags=["order"])
@@ -79,6 +80,21 @@ async def create_order(
     db.add(new_order)
     db.commit()
     db.refresh(new_order)
+
+    # ✅ Send Kafka event to delivery-service
+    try:
+        delivery_event_producer({
+            "order_uid": str(new_order.order_uid),
+            "customer_id": new_order.customer_id,
+            "outlet_code": new_order.outlet_code,
+            "total_price": new_order.total_price,
+            "status": str(new_order.status),
+            "delivery_address": new_order.delivery_address,
+            "items": validated_items,
+            "created_at": new_order.created_at.isoformat()
+        })
+    except Exception as e:
+        print(f"[Kafka Error] Failed to send event for order {new_order.order_uid} - {e}")
 
     # ✅ Store order items
     for item in validated_items:
