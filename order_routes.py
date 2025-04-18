@@ -303,8 +303,8 @@ async def update_order_status(
     except Exception:
         raise HTTPException(status_code=401, detail="Unauthorized access")
 
-    if user_role not in ["STAFF"]:
-        raise HTTPException(status_code=403, detail="Access forbidden: only staff or delivery personnel allowed")
+    if user_role not in ["STAFF", "DELIVERY"]:
+        raise HTTPException(status_code=403, detail="Access forbidden: only staff or delivery person allowed")
 
     order = db.query(models.Order).filter(models.Order.order_uid == str(order_uid)).first()
     if not order:
@@ -349,8 +349,8 @@ async def get_order_status(
     except Exception:
         raise HTTPException(status_code=401, detail="Unauthorized access")
 
-    if user_role != "CUSTOMER":
-        raise HTTPException(status_code=403, detail="Access forbidden: customers only")
+    if user_role not in ["ADMIN", "STAFF", "CUSTOMER"]:
+        raise HTTPException(status_code=403, detail="Access forbidden: customers, staff, admin only")
 
     order = db.query(models.Order).filter(models.Order.order_uid == order_uid).first()
     if not order:
