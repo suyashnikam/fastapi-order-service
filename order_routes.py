@@ -11,7 +11,7 @@ from uuid import UUID
 from kafka_producer import delivery_event_producer
 
 
-order_router = APIRouter(prefix="/order", tags=["order"])
+order_router = APIRouter(prefix="/api/v1/order", tags=["order"])
 
 # ✅ Create a new order
 @order_router.post("/create", response_model=schemas.OrderOut, status_code=status.HTTP_201_CREATED)
@@ -31,7 +31,7 @@ async def create_order(
     headers = {"Authorization": f"{Authorization}"}
 
     # ✅ Validate outlet_code with outlet service
-    outlet_service_url = os.getenv("OUTLET_SERVICE_BASE_URL", "http://127.0.0.1:8003") + f"/outlet/by-code/{order.outlet_code}"
+    outlet_service_url = os.getenv("OUTLET_SERVICE_BASE_URL", "http://127.0.0.1:8003") + f"/api/v1/outlet/by-code/{order.outlet_code}"
 
 
     try:
@@ -47,7 +47,7 @@ async def create_order(
     validated_items = []
 
     for item in order.items:
-        pizza_url = f"{pizza_service_url_base}/pizza/{item.pizza_id}"
+        pizza_url = f"{pizza_service_url_base}/api/v1/pizza/{item.pizza_id}"
         try:
             response = requests.get(pizza_url, headers=headers, timeout=5)
             if response.status_code != 200:
@@ -357,8 +357,9 @@ async def get_order_status(
         raise HTTPException(status_code=404, detail="Order not found")
 
     # Optional: Ensure customer is viewing only their own order
-    if order.customer_id != int(user_id):
-        raise HTTPException(status_code=403, detail="Access denied: not your order")
+    if user_role == "CUSTOMER":
+        if order.customer_id != int(user_id):
+            raise HTTPException(status_code=403, detail="Access denied: not your order")
 
     return {
         # "outlet_code": order.outlet_code,
