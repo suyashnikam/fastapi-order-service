@@ -31,7 +31,7 @@ async def create_order(
     headers = {"Authorization": f"{Authorization}"}
 
     # ✅ Validate outlet_code with outlet service
-    outlet_service_url = os.getenv("OUTLET_SERVICE_BASE_URL", "http://127.0.0.1:8003") + f"/api/v1/outlet/by-code/{order.outlet_code}"
+    outlet_service_url = os.getenv("OUTLET_SERVICE_BASE_URL", "http://127.0.0.1:8003") + f"/api/v1/outlet/{order.outlet_code}"
 
 
     try:
